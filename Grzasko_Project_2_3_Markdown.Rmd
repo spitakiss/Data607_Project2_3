@@ -1,0 +1,240 @@
+---
+title: 'Data 607: Project 2, Part 3'
+author: "Aaron Grzasko"
+date: "October 9, 2016"
+output: 
+    html_document:
+        theme: simplex
+        highlight: haddock
+---
+  
+---  
+  
+## Assignment Overview
+
+The purpose of this exercise is to gain additional experience manipulating untidy data, using data sets suggested by students in CUNY's Data 607 class.  
+  
+In Part III, I use a data set that I originally proposed in the week 5 [discussion forum](https://bbhosted.cuny.edu/webapps/discussionboard/do/message?action=list_messages&forum_id=_1397022_1&nav=discussion_board&conf_id=_1377703_1&course_id=_1310339_1&message_id=_20928088_1#msg__20928088_1Id).  
+  
+The data was originally found on the [USDA website](https://ndb.nal.usda.gov/ndb/search/list).  
+  
+## Load Libraries  
+  
+```{r, warning = FALSE, message=FALSE}
+# uncomment script below to install necessary packages
+# install.packages(c("tidyr","dplyr","stringr"))
+
+library(tidyr)
+library(dplyr)
+library(stringr)
+library(knitr)
+```
+  
+## Data    
+  
+The data sets for this exercise involve nutritional information for multiple types of milk.  
+  
+Information for individual milk types was manually selected from the USDA website and exported to separate csv files.  
+ 
+In this exercise, I will join together these separate files into one R object.  
+  
+Below, I load in messy files for five different milk types.  
+  
+  
+**Skim Milk**
+```{r, comment=NA}
+skim_link <- "https://raw.githubusercontent.com/spitakiss/Data607_Project2_3/master/skim_cow_milk.csv"
+skim_cow_milk <- read.csv(skim_link, header = TRUE, stringsAsFactors = FALSE, skip = 4)
+skim_cow_milk <- tbl_df(skim_cow_milk)
+head(skim_cow_milk)
+```
+  
+**Rice Milk**  
+```{r, comment=NA}
+rice_link <- "https://raw.githubusercontent.com/spitakiss/Data607_Project2_3/master/rice_milk.csv"
+rice_milk <- read.csv(rice_link, header = TRUE, stringsAsFactors = FALSE, skip = 4)  
+rice_milk <- tbl_df(rice_milk)
+head(rice_milk)
+```  
+  
+**Almond Milk**  
+```{r, comment=NA}
+almond_link <- "https://raw.githubusercontent.com/spitakiss/Data607_Project2_3/master/almond_milk.csv"
+almond_milk <- read.csv(almond_link, header = TRUE, stringsAsFactors = FALSE, skip = 4)  
+almond_milk <- tbl_df(almond_milk)
+head(almond_milk)
+```
+  
+**Soy Milk**  
+```{r, comment=NA}
+soy_link <- "https://raw.githubusercontent.com/spitakiss/Data607_Project2_3/master/soy_milk.csv"
+soy_milk <- read.csv(soy_link, header = TRUE, stringsAsFactors = FALSE, skip = 4)
+head(soy_link)
+```
+  
+**Goat Milk**  
+```{r, comment=NA}
+goat_link <- "https://raw.githubusercontent.com/spitakiss/Data607_Project2_3/master/goat_milk.csv"
+goat_milk <- read.csv(goat_link, header = TRUE, stringsAsFactors = FALSE, skip = 3)
+head(goat_milk)
+```
+
+## Tidy Data  
+  
+**Steps 1 - 7**  
+  
+1. *Subset columns*.  Select a small subset of necessary columns for this exercise.  
+  
+2. *Rename columns*.  Column names are long and convoluted.  Here we simplify the names.  
+  
+3. *Filter Nutrient Values*.  We filter values to pull only those relevant to the analysis.  
+  
+4. *Remove spaces and commas*.  We remove these elements from elements in the Nutrient column so that we can perform additional manipulations.  
+  
+5. *Milk Variable*. Assign a new variable that lists the appropriate milk type.
+ 
+6. *Convert rows to column*.  The elements in the nutrient column are each separate variables.  Use the `spread()` function to convert rows to columns.  
+
+7. *Rename Columns*.  The newly created column variables are long and complex.  Here, we simplify.   
+  
+
+```{r, comment=NA}
+skim_cow_milk <- skim_cow_milk %>%
+                # 1
+                select(Nutrient, X1.cup...245.0g) %>%
+                # 2
+                rename(value = X1.cup...245.0g) %>%
+                # 3
+                filter(Nutrient %in% c("Protein","Energy","Carbohydrate, by difference","Fiber, total dietary"))%>%
+                # 4
+                mutate(Nutrient = str_replace_all(Nutrient,pattern = " ", replacement = ""),
+                       Nutrient = str_replace_all(Nutrient,pattern = ",", replacement = ""),
+                        # 5
+                        milk_type = "skim_cow_milk"
+                ) %>%
+                # 6
+                spread(Nutrient, value) %>%
+                # 7
+                rename( carb = Carbohydratebydifference, cal = Energy, fiber = Fibertotaldietary, protein = Protein)    
+
+
+rice_milk <- rice_milk %>%
+                # 1
+                select(Nutrient, X8.0.fl.oz..approximate.weight..1.serving....240.0g) %>%
+                # 2
+                rename(value = X8.0.fl.oz..approximate.weight..1.serving....240.0g) %>%
+                # 3
+                filter(Nutrient %in% c("Protein","Energy","Carbohydrate, by difference","Fiber, total dietary"))%>%
+                # 4
+                mutate(Nutrient = str_replace_all(Nutrient,pattern = " ", replacement = ""),
+                Nutrient = str_replace_all(Nutrient,pattern = ",", replacement = ""),
+                # 5
+                milk_type = "rice_milk"
+    ) %>%
+    # 6
+    spread(Nutrient, value) %>%
+    # 7
+    rename( carb = Carbohydratebydifference, cal = Energy, fiber = Fibertotaldietary, protein = Protein)    
+
+
+almond_milk <- almond_milk %>%
+    # 1
+    select(Nutrient, X8.0.fl.oz...240.0g) %>%
+    # 2
+    rename(value = X8.0.fl.oz...240.0g) %>%
+    # 3
+    filter(Nutrient %in% c("Protein","Energy","Carbohydrate, by difference","Fiber, total dietary")) %>%
+    # 4
+    mutate(Nutrient = str_replace_all(Nutrient,pattern = " ", replacement = ""),
+           Nutrient = str_replace_all(Nutrient,pattern = ",", replacement = ""),
+           # 5
+           milk_type = "almond_milk"
+    ) %>%
+    # 6
+    spread(Nutrient, value) %>%
+    # 7
+    rename( carb = Carbohydratebydifference, cal = Energy, fiber = Fibertotaldietary, protein = Protein)    
+
+soy_milk <- soy_milk %>%
+    # 1
+    select(Nutrient, X1.cup...243.0g) %>%
+    # 2
+    rename(value = X1.cup...243.0g) %>%
+    # 3
+    filter(Nutrient %in% c("Protein","Energy","Carbohydrate, by difference","Fiber, total dietary")) %>%
+    # 4
+    mutate(Nutrient = str_replace_all(Nutrient,pattern = " ", replacement = ""),
+           Nutrient = str_replace_all(Nutrient,pattern = ",", replacement = ""),
+           # 5
+           milk_type = "soy_milk"
+    ) %>%
+    # 6
+    spread(Nutrient, value) %>%
+    # 7
+    rename( carb = Carbohydratebydifference, cal = Energy, fiber = Fibertotaldietary, protein = Protein)
+
+goat_milk <- goat_milk %>%
+    # 1
+    select(Nutrient, X8.0.oz...244.0g) %>%
+    # 2
+    rename(value = X8.0.oz...244.0g) %>%
+    # 3
+    filter(Nutrient %in% c("Protein","Energy","Carbohydrate, by difference","Fiber, total dietary")) %>%
+    # 4
+    mutate(Nutrient = str_replace_all(Nutrient,pattern = " ", replacement = ""),
+           Nutrient = str_replace_all(Nutrient,pattern = ",", replacement = ""),
+          # 5
+           milk_type = "goat_milk"
+    ) %>%
+    # 6
+    spread(Nutrient, value) %>%
+    # 7
+    rename( carb = Carbohydratebydifference, cal = Energy, fiber = Fibertotaldietary, protein = Protein)    
+
+
+```
+  
+**Step 8**  
+8. *Master Table*. Finally, we join the milk tables together into one master table.  
+  
+```{r, comment=NA}
+# 8
+milk_table <- bind_rows(skim_cow_milk,almond_milk, goat_milk, rice_milk, soy_milk)
+milk_table     
+
+```
+  
+## Analysis  
+
+We already completed the the following assignment instructions:  
+  
+* Search the USDA website for five different types of milk (examples could include  almond, cow,  rice, goat, hemp), and combine into one master table.    
+  
+* Manipulate the table format so that each row represents an observation for a specific type of milk.  Nutritional variables should be displayed as separate fields.  
+  
+Now we will tackle the following items:  
+  
+* Calculate the ratio of protein to total calories for each type of milk.  
+  
+* Calculate the average calorie content per cup across all milk types.  
+  
+* Sort the observations in ascending order by total calories per cup.  
+  
+```{r, comment = NA}  
+milk_table %>%
+    mutate(prot_to_cal = round(protein / cal, 4),
+           net_carb = carb - fiber
+           ) %>%
+    arrange(cal)
+```
+
+Finally, we we will tackle the last assignment instruction:  
+  
+* Calculate net carbohydrates for each milk type (i.e. gross carbohydrates - dietary fiber)  
+  
+```{r, comment=NA}
+summarise(milk_table, avg = mean(cal))
+```
+  
+
+
